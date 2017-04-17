@@ -323,6 +323,7 @@ Project Structure
 | Name                               | Description                                                  |
 | ---------------------------------- | ------------------------------------------------------------ |
 | **config**/passport.js             | Passport Local and OAuth strategies, plus login middleware.  |
+| **config**/routes.js               | Application route handlers and routes
 | **controllers**/api.js             | Controller for /api route and all api examples.              |
 | **controllers**/contact.js         | Controller for contact form.                                 |
 | **controllers**/home.js            | Controller for home page (index).                            |
@@ -521,20 +522,6 @@ and a new database step-by-step with mLab.
 ### Why Pug (Jade) instead of Handlebars?
 When I first started this project I didn't have any experience with Handlebars. Since then I have worked on Ember.js apps and got myself familiar with the Handlebars syntax. While it is true Handlebars is easier, because it looks like good old HTML, I have no regrets picking Jade over Handlebars. First off, it's the default template engine in Express, so someone who has built Express apps in the past already knows it. Secondly, I find `extends` and `block` to be indispensable, which as far as I know, Handlebars does not have out of the box. And lastly, subjectively speaking, Jade looks much cleaner and shorter than Handlebars, or any non-HAML style for that matter.
 
-### Why do you have all routes defined in app.js?
-For the sake of simplicity. While there might be a better approach,
-such as passing `app` context to each controller as outlined in this
-[blog](http://timstermatic.github.io/blog/2013/08/17/a-simple-mvc-framework-with-node-and-express/),
-I find such style to be confusing for beginners.
-It took me a long time to grasp the concept of `exports` and `module.exports`,
-let alone having a global `app` reference in other files.
-That to me is a backward thinking.
-The `app.js` is the "heart of the app", it should be the one referencing
-models, routes, controllers, etc.
-When working solo on small projects I actually prefer to have everything inside `app.js` as is the case with [this]((https://github.com/sahat/ember-sass-express-starter/blob/master/app.js))
-REST API server.
-
-
 ### Why is there no Mozilla Persona as a sign-in option?
 If you would like to use **Persona** authentication strategy, use the
 [pull request #64](https://github.com/sahat/hackathon-starter/pull/64) as a
@@ -552,7 +539,7 @@ how a particular functionality works. Maybe you are just curious about
 how it works, or maybe you are lost and confused while reading the code,
 I hope it provides some guidance to you.
 
-###Custom HTML and CSS Design 101
+### Custom HTML and CSS Design 101
 
 [HTML5 UP](http://html5up.net/) has many beautiful templates that you can download for free.
 
@@ -585,7 +572,7 @@ exports.escapeVelocity = (req, res) => {
 };
 ```
 
-And then create a route in `app.js`. I placed it right after the index controller:
+And then create a route in `config/routes.js`. I placed it right after the index controller:
 ```js
 app.get('/escape-velocity', homeController.escapeVelocity);
 ```
@@ -780,9 +767,9 @@ exports.getBooks = (req, res) => {
 };
 ```
 
-**Step 4.** Import that controller in `app.js`.
+**Step 4.** Import that controller in `config/app.js`.
 ```js
-const bookController = require('./controllers/book');
+const bookController = require('../controllers/book');
 ```
 
 **Step 5.** Create `books.pug` template.
@@ -873,7 +860,7 @@ const io = require('socket.io')(server);
 ```
 
 I like to have the following code organization in `app.js` (from top to bottom): module dependencies,
-import controllers, import configs, connect to database, express configuration, routes,
+import configs, connect to database, express configuration, import routes,
 start the server, socket.io stuff. That way I always know where to look for things.
 
 Add the following code at the end of `app.js`:
@@ -1144,7 +1131,7 @@ var yesterday = date.setDate(date.getDate() - 1);
 
 :top: <sub>[**back to top**](#table-of-contents)</sub>
 
-###Mongoose Cheatsheet
+### Mongoose Cheatsheet
 
 #### Find all users:
 ```js
@@ -1308,22 +1295,118 @@ Add this to `package.json`, after *name* and *version*. This is necessary becaus
 
 <img src="http://www.comparethecloud.net/wp-content/uploads/2014/06/ibm-bluemix_pr-030514.jpg" width="200">
 
-- Go to [Codename: Bluemix](http://bluemix.net) to signup for the free trial, or login with your *IBM id*
-- Install [Cloud Foundry CLI](https://github.com/cloudfoundry/cli)
-- Navigate to your **hackathon-starter** directory and then run `cf push [your-app-name] -m 512m` command to deploy the application
- - **Note:** You must specify a unique application name in place of `[your-app-name]`
-- Run `cf create-service mongodb 100 [your-service-name]` to create a [MongoDB service](https://www.ng.bluemix.net/docs/#services/MongoDB/index.html#MongoDB)
-- Run `cf bind-service [your-app-name] [your-service-name]` to associate your application with a service created above
-- Run `cf files [your-app-name] logs/env.log` to see the *environment variables created for MongoDB.
-- Copy the **MongoDB URI** that should look something like the following: `mongodb://68638358-a3c6-42a1-bae9-645b607d55e8:46fb97e6-5ce7-4146-9a5d-d623c64ff1fe@192.155.243.23:10123/db`
-- Then set it as an environment variable for your application by running `cf set-env [your-app-name] MONGODB_URI [your-mongodb-uri]`
-- Run `cf restart [your-app-name]` for the changes to take effect.
-- Visit your starter app at **http://[your-app-name].ng.bluemix.net**
-- Done!
+# IBM Bluemix Cloud Platform
+
+1. Create a Bluemix Account
+
+    [Sign up](https://console.ng.bluemix.net/registration/?target=%2Fdashboard%2Fapps) for Bluemix, or use an existing account.  
+
+2. Download and install the [Cloud Foundry CLI](https://github.com/cloudfoundry/cli) to push your applications to Bluemix.
+
+3. Create a `manifest.yml` file in the root of your application.
+  ```
+  applications:
+  - name:      <your-app-name>
+    host:      <your-app-host>
+    memory:    128M
+    services:
+    - myMongo-db-name
+  ```
+
+  The host you use will determinate your application url initially, e.g. `<host>.mybluemix.net`.  
+  The service name 'myMongo-db-name' is a declaration of your MongoDB service.  If you are using other services like Watson for example, then you would declare them the same way.
+
+4. Connect and login to Bluemix via the Cloud-foundry CLI
+  ```
+  $ cf login -a https://api.ng.bluemix.net
+  ```
+
+5. Create a [MongoDB service](https://www.ng.bluemix.net/docs/#services/MongoDB/index.html#MongoDB)
+  ```
+  $ cf create-service mongodb 100 [your-service-name]
+  ```
+  **Note:** this is a free and experiment verion of MongoDB instance.  
+  Use the MongoDB by Compose instance for production applications:
+  ```
+  $ cf create-service compose-for-mongodb Standard [your-service-name]'
+  ```
+
+6. Push the application
+
+    ```
+    $ cf push
+    ```
+    ```
+    $ cf env <your-app-name >
+    (To view the *environment variables* created for your application)
+
+    ```
+
+**Done**, now go to the staging domain(`<host>.mybluemix.net`.) and see your app running.  
+
+[Cloud Foundry Commands](https://console.ng.bluemix.net/docs/cli/reference/bluemix_cli/index.html)  
+[More Bluemix samples](https://ibm-bluemix.github.io/)  
+[Simple ToDo app in a programming language of your choice](https://github.com/IBM-Bluemix/todo-apps)  
 
 **Note:** Alternative directions, including how to setup the project with a DevOps pipeline are available at [http://ibm.biz/hackstart](http://ibm.biz/hackstart).
 A longer version of these instructions with screenshots is available at [http://ibm.biz/hackstart2](http://ibm.biz/hackstart2).
 Also, be sure to check out the [Jump-start your hackathon efforts with DevOps Services and Bluemix](https://www.youtube.com/watch?v=twvyqRnutss) video.
+
+---
+
+# IBM Bluemix Cloud Platform
+
+1. Create a Bluemix Account
+
+    [Sign up](https://console.ng.bluemix.net/registration/?target=%2Fdashboard%2Fapps) for Bluemix, or use an existing account.  
+
+2. Download and install the [Cloud Foundry CLI](https://github.com/cloudfoundry/cli) to push your applications to Bluemix.
+
+3. Create a `manifest.yml` file in the root of your application.
+  ```
+  applications:
+  - name:      <your-app-name>
+    host:      <your-app-host>
+    memory:    128M
+    services:
+    - myMongo-db-name
+  ```
+
+  The host you use will determinate your application url initially, e.g. `<host>.mybluemix.net`.  
+  The service name 'myMongo-db-name' is a declaration of your MongoDB service.  If you are using other services like Watson for example, then you would declare them the same way.
+
+4. Connect and login to Bluemix via the Cloud-foundry CLI
+  ```
+  $ cf login -a https://api.ng.bluemix.net
+  ```
+
+5. Create a [MongoDB service](https://www.ng.bluemix.net/docs/#services/MongoDB/index.html#MongoDB)
+  ```
+  $ cf create-service mongodb 100 [your-service-name]
+  ```
+  **Note:** this is a free and experiment verion of MongoDB instance.  
+  Use the MongoDB by Compose instance for production applications:
+  ```
+  $ cf create-service compose-for-mongodb Standard [your-service-name]'
+  ```
+
+
+6. Push the application
+
+    ```
+    $ cf push
+    ```
+    ```
+    $ cf env <your-app-name >
+    (To view the *environment variables* created for your application)
+
+    ```
+
+**Done**, now go to the staging domain(`<host>.mybluemix.net`.) and see your app running.  
+
+[Cloud Foundry Commands](https://console.ng.bluemix.net/docs/cli/reference/bluemix_cli/index.html)  
+[More Bluemix samples](https://ibm-bluemix.github.io/)  
+[Simple ToDo app in a programming language of your choice](https://github.com/IBM-Bluemix/todo-apps)  
 
 ---
 
